@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ProCorteSystem</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .hidden { display: none; }
+    .container {
+      position: relative;
+      width: 100%;
+      height: 100vh; /* Full viewport height */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+    .login-box, .form { 
+      position: relative;
+      width: 300px;
+      padding: 20px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      background: #fff;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .input-box, .input {
+      position: relative;
+      margin: 10px 0;
+      width: 100%;
+    }
+    .input-box input, .input input, .input-box select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-sizing: border-box;
+    }
+    .input-box label, .input span {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      transition: 0.3s;
+      pointer-events: none;
+    }
+    .input-box input:focus + label, .input input:focus + span,
+    .input-box input:not(:placeholder-shown) + label, .input input:not(:placeholder-shown) + span {
+      top: -10px;
+      left: 10px;
+      font-size: 12px;
+      color: #007BFF;
+    }
+    .forgot-pass, .signin, .signup-link {
+      text-align: center;
+      margin: 15px 0;
+    }
+    .forgot-pass a, .signin a, .signup-link a {
+      color: #007BFF;
+      text-decoration: none;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      background: #007BFF;
+      color: #fff;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    nav ul {
+      list-style: none;
+      display: flex;
+      gap: 10px;
+      padding: 0;
+    }
+    nav a {
+      text-decoration: none;
+      color: #007BFF;
+    }
+    section {
+      margin: 20px 0;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      width: 300px;
+      display: none; /* Hidden by default */
+    }
+    .active {
+      display: block;
+    }
+  </style>
+  <script>
+    function toggleSection(sectionId) {
+      const sections = document.querySelectorAll('section');
+      sections.forEach(section => {
+        if (section.id === sectionId) {
+          section.classList.add('active');
+        } else {
+          section.classList.remove('active');
+        }
+      });
+    }
+
+    function mostrarPagamento() {
+      const formaDePagamentoCreditoDebito = document.getElementById('formaDePagamentoCreditoDebito');
+      const formaDePagamentoPix = document.getElementById('formaDePagamentoPix');
+      const pagamento = document.getElementById('pagamento').value;
+
+      if (pagamento === 'credito' || pagamento === 'debito') {
+        formaDePagamentoCreditoDebito.classList.remove('hidden');
+        formaDePagamentoPix.classList.add('hidden');
+      } else if (pagamento === 'pix') {
+        formaDePagamentoCreditoDebito.classList.add('hidden');
+        formaDePagamentoPix.classList.remove('hidden');
+      } else {
+        formaDePagamentoCreditoDebito.classList.add('hidden');
+        formaDePagamentoPix.classList.add('hidden');
+      }
+    }
+
+    function mostrarBandeiras() {
+      const tipoCartao = document.querySelector('input[name="tipoCartao"]:checked').value;
+      const bandeiras = document.getElementById('bandeiras');
+      const bandeirasCredito = document.getElementById('bandeirasCredito');
+      const bandeirasDebito = document.getElementById('bandeirasDebito');
+
+      bandeiras.classList.remove('hidden');
+
+      if (tipoCartao === 'credito') {
+        bandeirasCredito.classList.remove('hidden');
+        bandeirasDebito.classList.add('hidden');
+      } else if (tipoCartao === 'debito') {
+        bandeirasCredito.classList.add('hidden');
+        bandeirasDebito.classList.remove('hidden');
+      }
+    }
+
+    function gerarChavePix() {
+      const total = document.getElementById('total').textContent.replace('R$', '').trim();
+      const chavePix = `00020126360014BR.GOV.BCB.PIX0114+55119999999990220${total.replace('.', '')}5204000053039865802BR5925ProcorteSystem6009Sao Paulo62070503***6304`;
+      document.getElementById('chave-pix').value = chavePix;
+      alert("Chave PIX gerada com sucesso!");
+    }
+
+    function checarOpcao(acao) {
+      alert(`Ação selecionada: ${acao}`);
+    }
+
+    function finalizarCompra() {
+      const data = new Date().toLocaleDateString();
+      const total = document.getElementById('total').textContent;
+      const chavePix = document.getElementById('chave-pix').value;
+
+      const comprovante = `Comprovante de Pagamento\nData: ${data}\nValor: ${total}\nChave PIX: ${chavePix}`;
+      alert(comprovante);
+    }
+
+    document.getElementById('form-agenda').addEventListener('submit', function(event) {
+      event.preventDefault();
+
+      const chavePix = document.getElementById('chave-pix').value;
+
+      if (validarChavePix(chavePix)) {
+        alert("Pagamento processando com a chave PIX: " + chavePix);
+      } else {
+        alert("Chave PIX inválida. Por favor, verifique os dados e tente novamente.");
+      }
+    });
+
+    function validarChavePix(chave) {
+      return chave.length >= 5;
+    }
+
+    function adicionarServicoOuPacote() {
+      const servicoouPacote = document.getElementById('servicoouPacote').value;
+      if (servicoouPacote) {
+        carrinho.push(servicoouPacote);
+        atualizarCarrinho();
+      } else {
+        alert('Por favor, selecione um serviço ou pacote.');
+      }
+    }
+
+    function atualizarCarrinho() {
+      const itensCarrinho = document.getElementById('itens-carrinho');
+      itensCarrinho.innerHTML = '';
+      carrinho.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'item-carrinho';
+        div.textContent = item;
+        itensCarrinho.appendChild(div);
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('form-forgot-password').addEventListener('submit', function(event) {
+        event.preventDefault();
+        alert('Link para redefinição de senha enviado!');
+      });
+
+      document.querySelector('.forgot-pass a').addEventListener('click', function(event) {
+        event.preventDefault();
+        toggleSection('forgot-password');
+      });
+    });
+  </script>
+</head>
+<body>
+  <header>
+    <h1>BEM VINDO AO ProCorteSystem</h1>
+    <h2>Sistema de Agendamento</h2>
+    <nav>
+      <ul>
+        <li><button onclick="toggleSection('perfil-usuario')">Perfil</button></li>
+        <li><button onclick="toggleSection('administrador')">Administrador</button></li>
+        <li><button onclick="toggleSection('barbearia')">Barbearia</button></li>
+        <li><button onclick="toggleSection('barbeiro')">Barbeiro</button></li>
+        <li><button onclick="toggleSection('pagamentos')">Pagamento</button></li>
+        <li><button onclick="toggleSection('servicos-contratados')">Meu/Pacote</button></li>
+        <li><button onclick="toggleSection('menu-de-servicos')">Menu</button></li>
+        <li><button onclick="toggleSection('configuracoes')">Configurações</button></li>
+        <li><button onclick="toggleSection('cadastro')">Cadastro</button></li>
+        <li><button onclick="toggleSection('login')">Login</button></li>
+      </ul>
+    </nav>
+  </header>
+  <main>
+    <div class="container">
+      <section id="perfil-usuario">
+        <h2>Perfil</h2>
+        <p>Visualize e edite as informações do seu perfil aqui.</p>
+      </section>
+
+      <section id="administrador">
+        <h2>Administrador</h2>
+        <p>Opções para administrador do sistema.</p>
+      </section>
+
+      <section id="barbearia">
+        <h2>Barbearia</h2>
+        <p>Informações sobre a barbearia.</p>
+      </section>
+
+      <section id="barbeiro">
+        <h2>Barbeiro</h2>
+        <p>Informações sobre o barbeiro.</p>
+      </section>
+
+      <section id="pagamentos">
+        <h2>Pagamento</h2>
+        <p>Escolha sua forma de pagamento preferida.</p>
+        <form>
+          <label for="pagamento">Pagamento:</label>
+          <select id="pagamento" name="pagamento" onchange="mostrarPagamento()">
+            <option value="seleciona">Selecione</option>
+            <option value="credito">Cartão de Crédito</option>
+            <option value="debito">Cartão de Débito</option>
+            <option value="pix">PIX</option>
+          </select>
+
+          <div id="formaDePagamentoCreditoDebito" class="hidden">
+            <label>
+              <input type="radio" name="tipoCartao" value="credito" onclick="mostrarBandeiras()"> Cartão de Crédito
+            </label>
+            <label>
+              <input type="radio" name="tipoCartao" value="debito" onclick="mostrarBandeiras()"> Cartão de Débito
+            </label>
+            <hr />
+            <div id="bandeiras" class="hidden">
+              <span>Bandeiras</span>
+              <label><input type="radio" name="bandeira" value="Visa"> Visa</label>
+              <label><input type="radio" name="bandeira" value="Mastercard"> Mastercard</label>
+              <label><input type="radio" name="bandeira" value="American Express"> American Express</label>
+              <label><input type="radio" name="bandeira" value="Diners Club"> Diners Club</label>
+              <label><input type="radio" name="bandeira" value="Discover"> Discover</label>
+            </div>
+            <hr />
+            <div>
+              <label for="cardNumber">Número do Cartão:</label>
+              <input type="text" id="cardNumber" placeholder="**** **** **** 4243">
+            </div>
+            <div>
+              <label for="Validade">Validade (Mes/Ano):</label>
+              <input type="text" id="Validade" placeholder="MM/AAAA">
+            </div>
+            <div>
+              <label for="cvv">Código (CVV):</label>
+              <input type="text" id="cvv" placeholder="CVV">
+            </div>
+          </div>
+
+          <div id="formaDePagamentoPix" class="hidden">
+            <label for="chave-pix">Chave PIX:</label>
+            <input type="text" id="chave-pix" name="chave-pix">
+          </div>
+          <button type="submit">Confirmar</button>
+        </form>
+      </section>
+
+      <section id="servicos-contratados">
+        <h2>Meu/Pacote</h2>
+        <p>Veja os serviços que você contratou aqui.</p>
+      </section>
+
+      <section id="agendamento">
+        <h2>Agendamento</h2>
+        <p>Agende seu horário e data aqui.</p>
+        <form id="form-agenda">
+          <label for="hora">Selecione o Horário:</label>
+          <select id="hora" name="hora">
+            <optgroup label="Manhã">
+              <option value="Selecione">Selecione</option>
+              <option value="08:00">08:00</option>
+              <option value="08:30">08:30</option>
+              <option value="09:00">09:00</option>
+              <option value="09:30">09:30</option>
+              <option value="10:00">10:00</option>
+              <option value="10:30">10:30</option>
+              <option value="11:00">11:00</option>
+              <option value="11:30">11:30</option>
+            </optgroup>
+            <optgroup label="Tarde">
+              <option value="13:00">13:00</option>
+              <option value="13:30">13:30</option>
+              <option value="14:00">14:00</option>
+              <option value="14:30">14:30</option>
+              <option value="15:00">15:00</option>
+              <option value="15:30">15:30</option>
+              <option value="16:00">16:00</option>
+              <option value="16:30">16:30</option>
+              <option value="17:00">17:00</option>
+              <option value="17:30">17:30</option>
+              <option value="18:00">18:00</option>
+              <option value="18:30">18:30</option>
+            </optgroup>
+          </select>
+
+          <label for="data">Selecione a Data:</label>
+          <input type="date" id="data" name="data">
+        </form>
+      </section>
+
+      <section id="playlist">
+        <h2>Playlist</h2>
+        <p>Desfrute de playlists exclusivas para pacotes pagos.</p>
+      </section>
+
+      <section id="configuracoes">
+        <h2>Configurações</h2>
+        <p>Ajuste as configurações do sistema aqui.</p>
+      </section>
+
+      <section id="cadastro">
+        <h2>Cadastro</h2>
+        <form id="form-cadastro">
+          <div class="input-box">
+            <input type="text" id="nome-cadastro" placeholder="Nome" required>
+            <label>Nome</label>
+          </div>
+          <div class="input-box">
+            <input type="email" id="email-cadastro" placeholder="Email" required>
+            <label>Email</label>
+          </div>
+          <div class="input-box">
+            <input type="password" id="senha-cadastro" placeholder="Senha" required>
+            <label>Senha</label>
+          </div>
+          <div class="input-box">
+            <select id="tipo_usuario_cadastro" required>
+              <option value="cliente">Cliente</option>
+              <option value="funcionario">Funcionário</option>
+              <option value="admin">Administrador</option>
+            </select>
+          </div>
+          <button type="submit">Cadastrar</button>
+        </form>
+      </section>
+
+      <section id="login">
+        <h2>Login</h2>
+        <form id="form-Login">
+          <div class="input-box">
+            <input type="text" id="nome" placeholder="Nome" required>
+            <label>Nome</label>
+          </div>
+          <div class="input-box">
+            <input type="password" id="senha" placeholder="Senha" required>
+            <label>Senha</label>
+          </div>
+          <div class="input-box">
+            <select id="tipo_usuario">
+              <option value="Selecione">Selecione</option>
+              <option value="cliente">Cliente</option>
+              <option value="funcionario">Funcionário</option>
+              <option value="admin">Administrador</option>
+            </select>
+          </div>
+          <button type="submit">Enter</button>
+        </form>
+        <div class="forgot-pass">
+          <a href="#">esquece a senha</a>
+        </div>
+        <div class="signup-link">
+          <a href="#">cadastre se</a>
+        </div>
+      </section>
+
+      <section id="forgot-password">
+        <h2>Esqueceu a Senha</h2>
+        <form id="form-forgot-password">
+          <div class="input-box">
+            <input type="email" id="email-forgot-password" placeholder="Email" required>
+            <label>Email</label>
+          </div>
+          <button type="submit">Enviar</button>
+        </form>
+      </section>
+
+      <section id="carrinho">
+        <h2>Carrinho</h2>
+        <div id="itens-carrinho"></div>
+      </section>
+    </div>
+  </main>
+  <footer>
+    <p>&copy; 2025 ProCorteSystem. Todos os direitos reservados.</p>
+  </footer>
+   <script src="agendamento.py"></script>
+    <script src="cadastro_usuario.py"></script>
+     <script src="comunicacao.py"></script>
+      <script src="pagamento.py"></script>
+       <script src="painel_admin.py"></script>
+        <script src="painel_funcionario.py"></script>
+         <script src="painel_cliente.py"></script>
+          <script src="config.py"></script>
+        </body>
+</html>
